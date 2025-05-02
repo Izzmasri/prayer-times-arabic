@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="styles.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=Jersey+20+Charted&family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&family=Rubik+Bubbles&family=Tajawal:wght@200;300;400;500;700;800;900&family=Winky+Rough:ital,wght@0,300..900;1,300..900&display=swap"
+      rel="stylesheet"
+    />
+    <title>مواقيت الصلاة في فلسطين</title>
+  </head>
+  <body>
+    <div style="height: 100vh">
+      <div style="margin-top: 70px">
+        <!-- change city select -->
+        <div class="center">
+          <select
+            name=""
+            id="cities-select"
+            style="
+              width: 300px;
+              height: 35px;
+              font-size: 25px;
+              font-family: Tajawal;
+              background: transparent;
+              color: white;
+              border-radius: 20px;
+            "
+          ></select>
+        </div>
+        <!-- /change city select -->
+        <div style="color: white; margin-right: 40px">
+          <h1 id="city-name">نابلس</h1>
+          <h2 id="date">الجمعة 24 نوفمبر</h2>
+        </div>
+        <hr style="margin: 0px 40px; border-color: #5200e1" />
+
+        <!-- prayer timings -->
+        <div
+          class="center"
+          style="height: 250px; margin-top: 80px; justify-content: space-around"
+        >
+          <!-- card -->
+          <div class="card">
+            <div class="header">
+              <h2>الفجر</h2>
+            </div>
+            <div class="body center" style="height: 80%">
+              <h1 class="time" id="fajir-time"></h1>
+            </div>
+          </div>
+          <!-- /card -->
+
+          <!-- card -->
+          <div class="card">
+            <div class="header">
+              <h2>الشروق</h2>
+            </div>
+            <div class="body center" style="height: 80%">
+              <h1 class="time" id="sunrise-time"></h1>
+            </div>
+          </div>
+          <!-- /card -->
+
+          <!-- card -->
+          <div class="card">
+            <div class="header">
+              <h2>الظهر</h2>
+            </div>
+            <div class="body center" style="height: 80%">
+              <h1 class="time" id="dhuhr-time"></h1>
+            </div>
+          </div>
+          <!-- /card -->
+
+          <!-- card -->
+          <div class="card">
+            <div class="header">
+              <h2>العصر</h2>
+            </div>
+            <div class="body center" style="height: 80%">
+              <h1 class="time" id="asr-time"></h1>
+            </div>
+          </div>
+          <!-- /card -->
+
+          <!-- card -->
+          <div class="card">
+            <div class="header">
+              <h2>المغرب</h2>
+            </div>
+            <div class="body center" style="height: 80%">
+              <h1 class="time" id="maghrib-time"></h1>
+            </div>
+          </div>
+          <!-- /card -->
+
+          <!-- card -->
+          <div class="card">
+            <div class="header">
+              <h2>العشاء</h2>
+            </div>
+            <div class="body center" style="height: 80%">
+              <h1 class="time" id="isha-time"></h1>
+            </div>
+          </div>
+          <!-- /card -->
+        </div>
+        <!-- /prayer timings -->
+      </div>
+    </div>
+  </body>
+
+  <script src="./node_modules/axios/dist/axios.min.js"></script>
+  <script>
+    let cities = [
+      {
+        arabicName: "نابلس",
+        name: "Nablus",
+      },
+      {
+        arabicName: "القدس",
+        name: "Jerusalem",
+      },
+      {
+        arabicName: "رام الله",
+        name: "Ramallah",
+      },
+      {
+        arabicName: "بيت لحم",
+        name: "Bethlehem",
+      },
+    ];
+
+    for (let city of cities) {
+      const content = `
+        <option>${city.arabicName}</option>
+      `;
+      document.getElementById("cities-select").innerHTML += content;
+    }
+
+    document
+      .getElementById("cities-select")
+      .addEventListener("change", function () {
+        document.getElementById("city-name").innerHTML = this.value;
+        let cityName = "";
+        for (let city of cities) {
+          if (city.arabicName === this.value) {
+            cityName = city.name;
+          }
+        }
+        getPrayersTimingsOfCity(cityName);
+      });
+
+    function getPrayersTimingsOfCity(cityName) {
+      let params = {
+        city: cityName,
+        country: "Palestine",
+      };
+
+      axios
+        .get("https://api.aladhan.com/v1/timingsByCity", {
+          params: params,
+        })
+        .then(function (response) {
+          const timings = response.data.data.timings;
+          fillTimeForPrayer("fajir-time", timings.Fajr);
+          fillTimeForPrayer("sunrise-time", timings.Sunrise);
+          fillTimeForPrayer("dhuhr-time", timings.Dhuhr);
+          fillTimeForPrayer("asr-time", timings.Asr);
+          fillTimeForPrayer("maghrib-time", timings.Sunset);
+          fillTimeForPrayer("isha-time", timings.Isha);
+
+          const readableDate = response.data.data.date.readable;
+          const weekDay = response.data.data.date.hijri.weekday.ar;
+          const date = weekDay + ":" + " " + readableDate;
+          document.getElementById("date").innerHTML = date;
+        })
+        .catch(function (error) {
+          console.log(error);
+        });
+    }
+    getPrayersTimingsOfCity("Nablus");
+
+    function fillTimeForPrayer(id, time) {
+      document.getElementById(id).innerHTML = time;
+    }
+  </script>
+</html>
